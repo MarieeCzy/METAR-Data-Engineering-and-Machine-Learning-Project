@@ -5,7 +5,7 @@ This Terraform module creates a Google Cloud Service Account and assigns the spe
 
 ## Usage
 
-```json
+```
 module "service_account" {
   source = "path/to/module"
 
