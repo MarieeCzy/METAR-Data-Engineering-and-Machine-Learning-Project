@@ -1,11 +1,11 @@
 resource "google_service_account" "service_account" {
-  account_id   = var.service_account_id
+  account_id   = var.account_id
   display_name = var.display_name
-  description  = "${var.display_name} Service Account for ${var.project_id} project"
+  description  = "${var.display_name} Service Account for ${var.project} project"
 }
 
 resource "google_project_iam_member" "account_roles" {
-  project = var.project_id
+  project = var.project
   role    = var.role
-  member  = "seviceAccount:${google_service_account.service_account.email}"
+  member  = "serviceAccount:${google_service_account.service_account.email}"
 }
