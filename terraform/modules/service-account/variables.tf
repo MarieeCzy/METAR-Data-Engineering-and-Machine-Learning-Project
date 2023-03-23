@@ -1,9 +1,9 @@
-variable "project_id" {
+variable "project" {
   description = "The ID of the project in which to provision resources."
   type        = string
 }
 
-variable "service_account_id" {
+variable "account_id" {
   description = " The account id that is used to generate the service account email address and a stable unique id."
   type        = string
 }
@@ -18,4 +18,6 @@ variable "role" {
   description = "The role that should be applied. Only one - required"
   type        = string
 }
+
+
 
