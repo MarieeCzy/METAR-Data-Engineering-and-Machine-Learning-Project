@@ -25,4 +25,5 @@ module "service_account" {
 
 ## Resources created
 `google_service_account.service_account`: The Google Cloud Service Account.
+
 `google_project_iam_member.account_roles`: The IAM binding between the service account and the specified role.
