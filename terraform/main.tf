@@ -9,17 +9,25 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
+  project = "metar-de-project-alpha-381321"
 }
 
 module "service-account" {
+  for_each     = toset(var.accounts)
   source       = "./modules/service-account"
-  account_id   = var.service_account_id
-  display_name = var.display_name
-  project      = var.project_id
-  role         = var.role
+  account_id   = "${each.value}-service-acc"
+  display_name = "${each.value}-service-acc"
+  project      = var.project
+  role         = "roles/${each.value}.admin"
 }
 
+
+
+/*
+terraform apply \
+  -var="project=metar-de-project-alpha-381321" \
+  -var='accounts=["bigquery", "storage"]'
+*/
 
 
 
