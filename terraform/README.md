@@ -19,7 +19,7 @@ accounts = ["service_account_1", "service_account_2", ...]
 
 3. Run `terraform init` to initialize the backend and provider plugins.
 
-4. Run terraform apply to create the service accounts with the roles specified in the role variable.
+4. Run `terraform apply` to create the service accounts with the roles specified in the role variable.
 
 Note: If you only want to create specific service accounts, you can modify the accounts variable in `terraform.tfvars` accordingly.
 
