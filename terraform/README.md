@@ -12,9 +12,13 @@ Access to a Google Cloud Platform project.
 
 2. Set the required variables for the project and service accounts by modyfing a file named terraform.tfvars. Use the following format:
 
-```
+```hcl
 project = "YOUR_GCP_PROJECT_ID"
-accounts = ["service_account_1", "service_account_2", ...]
+accounts    = {
+    bigquery    = "roles/bigquery.admin"
+    storage     = "roles/storage.admin"
+    main-viewer = "roles/viewer"
+  }
 ```
 
 3. Run `terraform init` to initialize the backend and provider plugins.
@@ -27,7 +31,7 @@ Note: If you only want to create specific service accounts, you can modify the a
 
 - `project`: The ID of the Google Cloud Platform project where the service accounts will be created.
 
-- `accounts`: A list of strings representing the name of the service accounts to be created. These names will be appended with `-service-acc`.
+- `accounts`: The map of strings representing the name of the service accounts and role to be created. These names will be appended with `-service-acc`.
 
 - `role`: The role to be granted to the service accounts. The role must be in the format `roles/ROLE_NAME`.
 

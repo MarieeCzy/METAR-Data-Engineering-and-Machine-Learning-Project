@@ -9,16 +9,16 @@ terraform {
 }
 
 provider "google" {
-  project = "metar-de-project-alpha-381321"
+  project = var.project
 }
 
 module "service-account" {
-  for_each     = toset(var.accounts)
+  for_each     = var.accounts
   source       = "./modules/service-account"
-  account_id   = "${each.value}-service-acc"
-  display_name = "${each.value}-service-acc"
+  account_id   = "${each.key}-service-acc"
+  display_name = "${each.key}-service-acc"
   project      = var.project
-  role         = "roles/${each.value}.admin"
+  role         = each.value
 }
 
 

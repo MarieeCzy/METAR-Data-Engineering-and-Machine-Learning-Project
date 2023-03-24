@@ -4,7 +4,6 @@ variable "role" {
   default     = ""
 }
 
-
 variable "project" {
   description = "The ID of the project in which to provision resources."
   type        = string
@@ -23,6 +22,7 @@ variable "display_name" {
 }
 
 variable "accounts" {
-  default = ["bigquery", "storage"]
-  type    = list(string)
+  description = "Provide set of resources strings for creating roles, for example: 'bigquery'"
+  type        = map(string)
 }
+
