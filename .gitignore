@@ -166,4 +166,7 @@ override.tf.json
 terraform.rc
 
 #Ignore data directories
+*/data
 /data
+data
+
