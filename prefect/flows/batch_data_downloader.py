@@ -1,3 +1,13 @@
+'''
+This module provides functionality to download weather data from specified networks and stations
+and save it locally in Parquet format.
+
+The downloaded data is saved in the data directory, with a subdirectory 
+for each network and station containing a Parquet file with the name of the station:
+
+/data/<network_name>/<station_name>/<station_name>.parquet
+'''
+
 import os
 import pandas as pd
 from pathlib import Path
@@ -7,13 +17,21 @@ from prefect import flow, task
 #station=EPKK&data=all&year1=2023&month1=1&day1=1&year2=2023&month2=3&day2=26&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=null&trace=T&direct=no&report_type=3&report_type=4
 #France Hungary Poland Germany Spain Greece Italy  Austria United Kingdom
 
+
+NETWORKS_SERVICE="https://mesonet.agron.iastate.edu/sites/networks.php?"
+STATION_SERVICE="https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?"
+
+networks_list = ['HU__ASOS','PL__ASOS']
+#networks_list = ['FR__ASOS','HU__ASOS','PL__ASOS','DE__ASOS','ES__ASOS','GR__ASOS','IT__ASOS','AT__ASOS','GB__ASOS']
+stations_list = []
+
 @task(retries=3)
-def get_stations_form_network(network: str) -> list[str]: 
+def get_stations_form_network(network_name: str) -> list[str]: 
     '''
     Gets a list of weather stations from a specified network.
 
     Args:
-        network (str): The network for which to retrieve weather stations.
+        network_name (str): The network for which to retrieve weather stations.
 
     Returns:
         list[str]: A list of station IDs.
@@ -26,18 +44,20 @@ def get_stations_form_network(network: str) -> list[str]:
         ['KAAA', 'KAAF', 'KABI', ...]
     '''
     
-    url = f'https://mesonet.agron.iastate.edu/sites/networks.php?network={network}&format=csv&nohtml=on'
-    df = pd.read_csv(url)
-    stations = list(df.stid)
-    return stations
+    network_url = f'{NETWORKS_SERVICE}network={network_name}&format=csv&nohtml=on'
+    df = pd.read_csv(network_url)
+    
+    #"stid" - df column name including station name for each record -> see example in docstring
+    stations_list = list(df.stid)
+    return stations_list
 
 @task(retries=3)
-def fetch_data(station: str) -> pd.DataFrame:
+def fetch_data_for_station(station_name: str) -> pd.DataFrame:
     '''
     Fetches weather data for a specified weather station.
 
     Args:
-        station (str): The ID of the weather station for which to retrieve data.
+        station_name (str): The ID of the weather station for which to retrieve data.
 
     Returns:
         pd.DataFrame: A Pandas DataFrame containing the weather data.
@@ -46,9 +66,8 @@ def fetch_data(station: str) -> pd.DataFrame:
         HTTPError: If there is an error accessing the URL.
     '''
     
-    service_url = 'https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?'
-    url = f'{service_url}station={station}&data=all&year1=2021&month1=1&day1=1&year2=2023&month2=3&day2=26&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=null&trace=T&direct=no&report_type=3&report_type=4'
-    df = pd.read_csv(url, low_memory=False)
+    station_url = f'{STATION_SERVICE}station={station_name}&data=all&year1=2021&month1=1&day1=1&year2=2023&month2=3&day2=26&tz=Etc%2FUTC&format=onlycomma&latlon=yes&elev=yes&missing=null&trace=T&direct=no&report_type=3&report_type=4'
+    df = pd.read_csv(station_url, low_memory=False)
     return df
 
 @task
@@ -73,30 +92,30 @@ def write_local(df: pd.DataFrame, network_name:str, station_name: str) -> Path:
 
         
 @flow(log_prints=True)   
-def data_writer(stations: list[str], network: str) -> None:
+def station_data_writer(stations_list: list[str], network_name: str) -> None:
     '''
     Fetches weather data for each station in a list of stations and saves it locally.
 
     Args:
-        stations (list[str]): A list of station IDs for which to retrieve data.
-        network (str): The name of the network to which the stations belong.
+        stations_list (list[str]): A list of station IDs for which to retrieve data.
+        network_name (str): The name of the network to which the stations belong.
 
     Returns:
         None
     '''
     
-    for station in stations:
+    for station_name in stations_list:
         
         try:
-            os.mkdir(f'data/{network}/{station}')
+            os.mkdir(f'data/{network_name}/{station_name}')
         except FileExistsError:
             pass
         
-        df = fetch_data(station)
-        write_local(df, network_name=network, station_name=station)
+        df = fetch_data_for_station(station_name)
+        write_local(df, network_name, station_name)
 
 @flow(log_prints=True)
-def get_batch_data() -> None:
+def get_batch_data(networks_list: list[str]=networks_list) -> None:
     '''
     Fetches weather data for multiple networks and saves it locally.
     
@@ -106,18 +125,16 @@ def get_batch_data() -> None:
     Returns:
         None
     '''
-    #networks = ['HU__ASOS','PL__ASOS']
-    networks = ['FR__ASOS','HU__ASOS','PL__ASOS','DE__ASOS','ES__ASOS','GR__ASOS','IT__ASOS','AT__ASOS','GB__ASOS']
     
-    for network in networks:
+    for network_name in networks_list:
         
         try:
-            os.mkdir(f'data/{network}')
+            os.mkdir(f'data/{network_name}')
         except FileExistsError:
             pass
         
-        stations = get_stations_form_network(network=network)
-        data_writer(stations, network)
+        stations_list = get_stations_form_network(network_name)
+        station_data_writer(stations_list, network_name)
 
 
 if __name__ == "__main__":
