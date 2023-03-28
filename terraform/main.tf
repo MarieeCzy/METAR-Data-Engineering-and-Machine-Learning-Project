@@ -21,13 +21,14 @@ module "service-account" {
   role         = each.value
 }
 
+#Google Cloud Storage Bucket
+resource "google_storage_bucket" "metar-de-project" {
+  for_each = toset(var.buckets)
+  name     = "${each.key}-metar-bucket"
+  location = var.location
+}
 
 
-/*
-terraform apply \
-  -var="project=metar-de-project-alpha-381321" \
-  -var='accounts=["bigquery", "storage"]'
-*/
 
 
 

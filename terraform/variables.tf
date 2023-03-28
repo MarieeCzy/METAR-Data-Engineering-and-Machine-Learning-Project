@@ -26,3 +26,12 @@ variable "accounts" {
   type        = map(string)
 }
 
+variable "buckets" {
+  description = "Provide buckets names for creating resources example: batch, realt-time"
+  type        = list(string)
+}
+
+variable "location" {
+  description = "(Required) The GCS location."
+  type        = string
+}
