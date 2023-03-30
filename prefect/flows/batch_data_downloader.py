@@ -9,9 +9,11 @@ for each network and station containing a Parquet file with the name of the stat
 '''
 
 import os
+import datetime
 import pandas as pd
 from pathlib import Path
 from prefect import flow, task
+from prefect.tasks import task_input_hash
 
 #https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?
 #station=EPKK&data=all&year1=2023&month1=1&day1=1&year2=2023&month2=3&day2=26&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=null&trace=T&direct=no&report_type=3&report_type=4
@@ -25,7 +27,15 @@ networks_list = ['HU__ASOS','PL__ASOS']
 #networks_list = ['FR__ASOS','HU__ASOS','PL__ASOS','DE__ASOS','ES__ASOS','GR__ASOS','IT__ASOS','AT__ASOS','GB__ASOS']
 stations_list = []
 
-@task(retries=3)
+start_date = datetime.datetime(2023, 1, 1)
+#current date and time
+end_date = datetime.datetime.now()
+
+@task(retries=3,
+      retry_delay_seconds=60,
+      cache_key_fn=task_input_hash,
+      cache_expiration=datetime.timedelta(minutes=1),
+      task_run_name="Getting stations for {network_name} network")
 def get_stations_form_network(network_name: str) -> list[str]: 
     '''
     Gets a list of weather stations from a specified network.
@@ -51,7 +61,11 @@ def get_stations_form_network(network_name: str) -> list[str]:
     stations_list = list(df.stid)
     return stations_list
 
-@task(retries=3)
+@task(retries=3,
+      retry_delay_seconds=60,
+      cache_key_fn=task_input_hash,
+      cache_expiration=datetime.timedelta(minutes=5),
+      task_run_name="Reading data for {station_name} station")
 def fetch_data_for_station(station_name: str) -> pd.DataFrame:
     '''
     Fetches weather data for a specified weather station.
@@ -66,12 +80,20 @@ def fetch_data_for_station(station_name: str) -> pd.DataFrame:
         HTTPError: If there is an error accessing the URL.
     '''
     
-    station_url = f'{STATION_SERVICE}station={station_name}&data=all&year1=2021&month1=1&day1=1&year2=2023&month2=3&day2=26&tz=Etc%2FUTC&format=onlycomma&latlon=yes&elev=yes&missing=null&trace=T&direct=no&report_type=3&report_type=4'
+    station_url = STATION_SERVICE + f"station={station_name}&data=all&"
+    station_url += start_date.strftime("year1=%Y&month1=%m&day1=%d&")
+    station_url += end_date.strftime("year2=%Y&month2=%m&day2=%d&")
+    station_url += "tz=Etc%2FUTC&format=onlycomma&latlon=yes&elev=yes&missing=null&trace=T&direct=no&report_type=3&report_type=4"
+    
     df = pd.read_csv(station_url, low_memory=False)
     return df
 
-@task
-def write_local(df: pd.DataFrame, network_name:str, station_name: str) -> Path:
+@task(task_run_name="Saving data for {station_name} station")
+def write_local(
+    df: pd.DataFrame, 
+    network_name:str, 
+    station_name: str
+    ) -> Path:
     '''
     Writes a Pandas DataFrame to local disk in Parquet format, with gzip compression.
 
@@ -91,8 +113,13 @@ def write_local(df: pd.DataFrame, network_name:str, station_name: str) -> Path:
     return path
 
         
-@flow(log_prints=True)   
-def station_data_writer(stations_list: list[str], network_name: str) -> None:
+@flow(name='Flow managing local data storage', 
+      flow_run_name=f"Local data storage start date: {start_date.strftime('%d.%m.%Y')}, end date: {end_date.strftime('%d.%m.%Y')}",
+      log_prints=True)
+def station_data_writer(
+    stations_list: list[str], 
+    network_name: str
+    ) -> None:
     '''
     Fetches weather data for each station in a list of stations and saves it locally.
 
@@ -114,8 +141,10 @@ def station_data_writer(stations_list: list[str], network_name: str) -> None:
         df = fetch_data_for_station(station_name)
         write_local(df, network_name, station_name)
 
-@flow(log_prints=True)
-def get_batch_data(networks_list: list[str]=networks_list) -> None:
+@flow(name='Flow extracting stations from a given network', log_prints=True)
+def extract_stations_and_transfer_to_save(
+    networks_list: list[str]=networks_list
+    ) -> None:
     '''
     Fetches weather data for multiple networks and saves it locally.
     
@@ -143,4 +172,4 @@ if __name__ == "__main__":
     except FileExistsError:
         pass
     
-    get_batch_data()
+    extract_stations_and_transfer_to_save()
