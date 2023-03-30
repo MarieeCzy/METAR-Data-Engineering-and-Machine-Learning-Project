@@ -170,3 +170,6 @@ terraform.rc
 /data
 data
 
+#Secrets
+/.secrets
+.secrets
