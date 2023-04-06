@@ -34,12 +34,12 @@ start_date = datetime.datetime(
     )
 
 #current date and time
-end_date = datetime.datetime.now()
+end_date = datetime.datetime.now() + datetime.timedelta(days=1)
 
 @task(retries=3,
       retry_delay_seconds=60,
-      cache_key_fn=task_input_hash,
-      cache_expiration=datetime.timedelta(minutes=1),
+      #cache_key_fn=task_input_hash,
+      #cache_expiration=datetime.timedelta(minutes=1),
       task_run_name="Getting stations for {network_name} network")
 def get_stations_form_network(network_name: str) -> list[str]: 
     '''
@@ -68,8 +68,8 @@ def get_stations_form_network(network_name: str) -> list[str]:
 
 @task(retries=3,
       retry_delay_seconds=60,
-      cache_key_fn=task_input_hash,
-      cache_expiration=datetime.timedelta(minutes=5),
+      #cache_key_fn=task_input_hash,
+      #cache_expiration=datetime.timedelta(minutes=5),
       task_run_name="Reading data for {station_name} station")
 def fetch_data_for_station(station_name: str) -> pd.DataFrame:
     '''
