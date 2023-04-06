@@ -9,8 +9,7 @@ The response from the deployment is then printed to the console.
 from prefect.deployments import run_deployment
 
 def main() -> None:
-    response = run_deployment("Flow extracting stations from a given network/\n"
-                              "Download web batch data and save it locally")
+    response = run_deployment("Flow extracting stations from a given network/Download web batch data and save it locally")
     print(response)
     
 if __name__ == "__main__":
