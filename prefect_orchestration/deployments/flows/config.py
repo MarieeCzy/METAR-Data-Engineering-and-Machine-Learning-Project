@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 
 #path to root project directory
-ROOT_DIR_PATH = Path(__file__).parent.parent.parent.parent
+ROOT_DIR_PATH = Path(__file__)
 DATA_RELATIVE_PATH = 'prefect_orchestration/deployments/flows/data'
 
 #networks_list = ['FR__ASOS','HU__ASOS','PL__ASOS','DE__ASOS','ES__ASOS','GR__ASOS','IT__ASOS','AT__ASOS','GB__ASOS']
