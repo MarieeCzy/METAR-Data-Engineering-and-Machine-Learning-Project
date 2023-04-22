@@ -1,6 +1,6 @@
 '''
 This module provides functionality to download weather data from specified networks and stations
-and save it locally in Parquet format.
+and save it in Google Cloud Storage in Parquet format.
 
 The downloaded data is saved in the data directory, with a subdirectory 
 for each network and station containing a Parquet file with the name of the station:
@@ -9,9 +9,11 @@ for each network and station containing a Parquet file with the name of the stat
 '''
 
 import os
-from . import config
+import pathlib
 import datetime
 import pandas as pd
+from . import config
+from prefect_gcp.cloud_storage import GcsBucket
 from pathlib import Path
 from prefect import flow, task
 from prefect.tasks import task_input_hash
@@ -23,7 +25,6 @@ from prefect.tasks import task_input_hash
 
 NETWORKS_SERVICE="https://mesonet.agron.iastate.edu/sites/networks.php?"
 STATION_SERVICE="https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?"
-FLOWS_ABSOLUTE_PATH=config.flows_absolute_path
 
 stations_list = []
 
@@ -111,22 +112,39 @@ def write_local(
         Path: The path to the saved file.
     '''
     
-    path = Path(f'{FLOWS_ABSOLUTE_PATH}/data/{network_name}/{station_name}/{station_name}.parquet')
+    path = Path(f'data/{network_name}/{station_name}/{station_name}.parquet')
     
     df.to_parquet(path, compression='gzip')
-    print(f'{network_name} {station_name} - saved.')
+    print(f'{network_name} {station_name} - saved: {path}')
     return path
 
+@task(log_prints=True,
+      task_run_name='Saving data to GCS: {parquet_path}')
+def load_from_path_to_gcs(parquet_path: pathlib.Path) -> None:
+    '''
+     Uploads a parquet file to a Google Cloud Storage bucket.
+
+    Parameters:
+        parquet_path: A pathlib.Path object representing the path to the local parquet file to upload.
+    
+    Note:
+        This function assumes that the GCS bucket already exists and that the name of the parquet file in the
+        GCS bucket should be the same as its local name.
+
+    '''
+    gcs_block = GcsBucket.load("google-cloud-storage-bucket-block-metar")
+    gcs_block.upload_from_path(from_path=parquet_path, to_path=parquet_path)
+
         
-@flow(name='Flow managing local data storage', 
-      flow_run_name=f"Local data storage start date: {start_date.strftime('%d.%m.%Y')}, end date: {end_date.strftime('%d.%m.%Y')}",
+@flow(name='Flow managing data storage', 
+      flow_run_name=f"Data storage start date: {start_date.strftime('%d.%m.%Y')}, end date: {end_date.strftime('%d.%m.%Y')}",
       log_prints=True)
 def station_data_writer(
     stations_list: list[str], 
     network_name: str
     ) -> None:
     '''
-    Fetches weather data for each station in a list of stations and saves it locally.
+    Fetches weather data for each station in a list of stations and saves it to Google Cloud Storage.
 
     Args:
         stations_list (list[str]): A list of station IDs for which to retrieve data.
@@ -139,14 +157,16 @@ def station_data_writer(
     for station_name in stations_list:
         
         try:
-            os.mkdir(f'{FLOWS_ABSOLUTE_PATH}/data/{network_name}/{station_name}')
+            os.mkdir(f'data/{network_name}/{station_name}')
         except FileExistsError:
             pass
         
         df = fetch_data_for_station(station_name)
-        write_local(df, network_name, station_name)
+        data_path = write_local(df, network_name, station_name)
+        load_from_path_to_gcs(data_path)
 
-@flow(name='Flow extracting stations from a given network', log_prints=True)
+@flow(name='Flow extracting stations from a given network', 
+      log_prints=True)
 def extract_stations_and_transfer_to_save(
     networks_list: list[str]=config.networks_list,
     
@@ -162,14 +182,14 @@ def extract_stations_and_transfer_to_save(
     '''
     
     try:
-        os.mkdir(f'{FLOWS_ABSOLUTE_PATH}/data')
+        os.mkdir(f'data')
     except FileExistsError:
         pass
 
     for network_name in networks_list:
         
         try:
-            os.mkdir(f'{FLOWS_ABSOLUTE_PATH}/data/{network_name}')
+            os.mkdir(f'data/{network_name}')
         except FileExistsError:
             pass
                 
