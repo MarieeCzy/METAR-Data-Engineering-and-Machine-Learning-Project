@@ -6,24 +6,25 @@ from the Prefect deployments module.
 The response from the deployment is then printed to the console.
 '''
 import argparse
+import subprocess
 from prefect.deployments import run_deployment
 
 def main(args) -> None:
     stage = args.stage
     
     if stage == 'S1':
-        print('Web -> local') 
-        response = run_deployment("Flow extracting stations from a given network/Download web batch data and save it locally")
-        
+        print('Web -> GCS') 
+        response = run_deployment("Flow extracting stations from a given network/Download web batch data and save it to GCS")
+        print(response)
+    
     elif stage == 'S2':
-        print('Local -> GCS') 
-        response = run_deployment("Load local parquet file to GCS bucket/Get path to file and save to GCS bucket")
+        print('Submitting Spark job') 
+        subprocess.run("./gcloud_submit_job.sh",shell=True)
     
-    print(response)
-    
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage data pipeline deployments")
-    parser.add_argument('--stage', required=True, help='"S1" for WEB TO LOCAL, "S2" for LOCAL TO GCS')
+    parser.add_argument('--stage', required=True, help='"S1" for web -> GCS, "S2" GCS -> BigQuery')
     
     args = parser.parse_args()
     main(args)

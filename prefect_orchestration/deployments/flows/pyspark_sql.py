@@ -1,8 +1,9 @@
 import argparse
-import pyspark
 from pyspark.sql import SparkSession
 from pyspark.sql import types
 from pyspark.sql.functions import col, to_timestamp
+from pyspark.conf import SparkConf
+from pyspark.context import SparkContext
 
 parser = argparse.ArgumentParser()
 
@@ -14,8 +15,16 @@ args = parser.parse_args()
 input = args.input
 output = args.output
 
+conf = SparkConf()\
+    .set("spark.sql.parquet.writeLegacyFormat","true")\
+    .set("spark.sql.files.ignoreCorruptFiles", "true")\
+    .set("spark.sql.debug.maxToStringFields",1000)
+
+sc = SparkContext(conf=conf)
+
 spark = SparkSession.builder \
     .appName('metar-project') \
+    .config(conf=sc.getConf())\
     .getOrCreate()
     
 schema = types.StructType([
@@ -59,7 +68,8 @@ df = spark.read\
     .parquet(input)
 
 df = df\
-    .withColumn('valid', to_timestamp(col('valid'), 'yyy-MM-dd HH:mm'))
+    .withColumn('valid', to_timestamp(col('valid'), 'yyy-MM-dd HH:mm'))\
+    .drop('p01i')
         
 df.registerTempTable('data')
 
@@ -67,11 +77,19 @@ df.registerTempTable('data')
 sql_data = spark.sql('''
                  SELECT *
                  FROM data
-                 WHERE  station = 'EPWA'
                  ''')
 
 
-sql_data.coalesce(1)\
-    .write.parquet(output, mode='overwrite')
+#sql_data.coalesce(1) \
+#    .write.parquet(output, mode='overwrite')
+
+# Use the Cloud Storage bucket for temporary BigQuery export data used
+# by the connector.
+bucket = "dataproc-temp-europe-west1-382050721889-kfi3x12x"
+spark.conf.set('temporaryGcsBucket', bucket)
+
+sql_data.write.format('bigquery') \
+    .option('table', output) \
+    .save()
     
 #gsutil cp pyspark_sql.py gs://batch-metar-bucket-v2/code/pyspark_sql.py
