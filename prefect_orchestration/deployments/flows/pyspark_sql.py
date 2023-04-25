@@ -157,12 +157,12 @@ sql_stats.write.format('bigquery') \
     .mode("overwrite") \
     .save()
     
-sql_stats.write.format('bigquery') \
+sql_wind_drct.write.format('bigquery') \
     .option('table', bq_output+'_wind_drct_')\
     .mode("overwrite") \
     .save()
     
-sql_stats.write.format('bigquery') \
+sql_skyc1.write.format('bigquery') \
     .option('table', bq_output+'_skyc1_')\
     .mode("overwrite") \
     .save()
