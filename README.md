@@ -1,4 +1,5 @@
 ![Progress](https://camo.githubusercontent.com/46884dbe2b094a29e9fa03bed9985b0710df347f39dad448fd0799138b109eea/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f5374617475732d576f726b5f696e5f70726f67726573732d79656c6c6f77)
+![Stage1](https://img.shields.io/badge/Phase1-completed-green)
 
 <h1 align="center">🌦️ METAR Data Engineering and Machine Learning Project 🛫</h1>
 
@@ -9,7 +10,7 @@
   <a href="#👉-phase-1">Phase 1</a> •
   <a href="#👉-phase-2">Phase 2</a> •
   <a href="#👉-phase-3-final-stage">Phase 3 - Final Stage</a> •
-  <a href="#data-source">Data source</a> •
+  <a href="#data-source">Data source</a> 
 </p>
 
 ---
@@ -24,7 +25,7 @@
 ![Shell Script](https://img.shields.io/badge/shell_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![Jupyter Notebook](https://img.shields.io/badge/jupyter-%23FA0F00.svg?style=for-the-badge&logo=jupyter&logoColor=white)
 
-- [dbt](https://www.getdbt.com/)
+- [Dataproc](https://cloud.google.com/dataproc)
 - [Apache Spark](https://spark.apache.org/)
 - [PySpark](https://spark.apache.org/docs/latest/api/python/)
 - [Streamlit](https://streamlit.io/)
@@ -84,6 +85,18 @@ Collection of analytical reports for historical data, preparation of web dashboa
 
 ---
 
+## 📊 Looker report
+
+The report generated in Looker provides averages of METAR data, broken down by temperature, winds, directions, and weather phenomena, with accompanying charts. The data was scraped via URL and stored in raw form in Cloud Storage. PySpark and Dataproc were then used to prepare SQL tables with aggregation functions, which were saved in BigQuery. The Looker report directly utilizes these tables from BigQuery.
+
+Additionally, it's possible to prepare a similar report for other networks. 
+Below is an example for PL__ASOS. 
+
+Check: [PL__ASOS](https://lookerstudio.google.com/reporting/ef5cab41-deeb-498e-95de-c29cf52a3fe6)
+
+For more information, please refer to the <b>"How to contribute"</b> section.
+
+![view5][Looker_report]
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
@@ -91,4 +104,5 @@ Collection of analytical reports for historical data, preparation of web dashboa
 [Final_platform]: docs/images/Final_platform.jpg
 [Milestone_1_platform]: docs/images/Milestone_1_platform.jpg
 [Milestone_2_platform]: docs/images/Milestone_2_platform.jpg
+[Looker_report]: docs/report/Looker_report.jpg
 
