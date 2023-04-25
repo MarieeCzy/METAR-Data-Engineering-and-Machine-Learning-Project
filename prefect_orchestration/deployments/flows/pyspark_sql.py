@@ -11,11 +11,13 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--input', required=True)
 parser.add_argument('--bq_output', required=True)
+parser.add_argument('--temp_bucket', required=True)
 
 args = parser.parse_args()
 
 input = args.input
 bq_output = args.bq_output
+temp_bucket = args.temp_bucket
 
 conf = SparkConf()\
     .set("spark.sql.parquet.writeLegacyFormat","true")\
@@ -139,7 +141,7 @@ sql_skyc1 = spark.sql(f'''
 
 # Use the Cloud Storage bucket for temporary BigQuery export data used
 # by the connector.
-bucket = "dataproc-temp-europe-west1-382050721889-kfi3x12x"
+bucket = temp_bucket
 spark.conf.set('temporaryGcsBucket', bucket)
 
 sql_data_all.write.format('bigquery') \
@@ -169,4 +171,4 @@ sql_skyc1.write.format('bigquery') \
     
 
     
-#gsutil cp pyspark_sql.py gs://batch-metar-bucket-v2/code/pyspark_sql.py
+#gsutil cp pyspark_sql.py gs://code112/pyspark_sql.py

@@ -168,7 +168,7 @@ def station_data_writer(
 @flow(name='Flow extracting stations from a given network', 
       log_prints=True)
 def extract_stations_and_transfer_to_save(
-    networks_list: list[str]=config.networks_list,
+    networks_list: list[str]=config.network,
     
     ) -> None:
     '''

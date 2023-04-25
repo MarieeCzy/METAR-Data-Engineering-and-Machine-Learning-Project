@@ -24,6 +24,17 @@ module "service-account" {
 #Google Cloud Storage Bucket
 resource "google_storage_bucket" "metar-de-project" {
   for_each = toset(var.buckets)
-  name     = "${each.key}-metar-bucket-v2"
+  name     = "${each.key}-metar-bucket-1"
   location = var.location
+}
+
+resource "google_storage_bucket" "code" {
+  name     = "code"
+  location = var.location
+}
+
+#BigQuery dataset
+resource "google_bigquery_dataset" "dataset" {
+  dataset_id = "reports"
+  location   = var.location
 }
