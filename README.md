@@ -57,7 +57,7 @@ The project is divided into 3 phases according to the attached diagrams:
 ## 👉 Phase 1
 
 Retrieval of archive data from source. Initial transformation.
-Transfer of data to Data Lake - Google Cloud Storage. Transfer of data to Data Warehouse. Transformations using data build tools. Visualisation of aggregated data on an interactive dashboard in Looker.
+Transfer of data to Data Lake - Google Cloud Storage. Transfer of data to Data Warehouse. Transformations using PySpark on Dataproc cluster. Visualisation of aggregated data on an interactive dashboard in Looker.
 
 ![view2][Milestone_1_platform]
 
