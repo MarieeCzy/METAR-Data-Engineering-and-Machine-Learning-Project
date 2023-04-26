@@ -24,12 +24,6 @@ module "service-account" {
 #Google Cloud Storage Bucket
 resource "google_storage_bucket" "metar-de-project" {
   for_each = toset(var.buckets)
-  name     = "${each.key}-metar-bucket-v1"
+  name     = "${each.key}-metar-bucket-v2"
   location = var.location
 }
-
-
-
-
-
-
