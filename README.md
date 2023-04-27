@@ -10,7 +10,9 @@
   <a href="#👉-phase-1">Phase 1</a> •
   <a href="#👉-phase-2">Phase 2</a> •
   <a href="#👉-phase-3-final-stage">Phase 3 - Final Stage</a> •
-  <a href="#data-source">Data source</a> 
+  <a href="#data-source">Data source</a> •
+  <a href="#📊-looker-report">Looker report</a> •
+  <a href="#🛠️-setup">Setup</a> 
 </p>
 
 ---
@@ -94,9 +96,208 @@ Below is an example for PL__ASOS.
 
 Check: [PL__ASOS](https://lookerstudio.google.com/reporting/ef5cab41-deeb-498e-95de-c29cf52a3fe6)
 
-For more information, please refer to the <b>"How to contribute"</b> section.
+For more information, please refer to the <b>"Setup"</b> section.
 
 ![view5][Looker_report]
+
+
+
+
+---
+
+## 🛠️ Setup
+
+1. Make sure you have Spark, PySpark, Google Cloud Platform SDK, Prefect and Terraform installed and configured.
+
+2. Clone the repo
+
+    ```shell
+    $ git clone https://github.com/MarieeCzy/METAR-Data-Engineering-and-Machine-Learning-Project.git
+    ```
+
+3. Create a new python virtual environment.
+
+    ```shell
+    $ python -m venv venv
+    ```
+
+4. Activate the new virtual environment using source (Unix systems) or .\venv\Scripts\activate (Windows systems).
+
+    ```shell
+    $ source venv/bin/activate
+    ```
+
+5. Install packages from requirements.txt using pip. Make sure the requirements.txt file is in your current working directory.
+
+    ```shell
+    $ pip install -r requirements.txt
+    ```
+6. Create new project on the GCP platform, assign it as default and authorize:
+
+    ```shell
+    $ gcloud config set project <your_project_name>
+    $ gcloud auth login
+    ```
+
+7. Configure variables for Terraform:
+  
+    6.1. In:
+    
+      `terraform.tfvars` 
+     
+     replace project name to the name of your project created within the Google Cloud Platform:
+
+      `project     = <your_project_name>`
+
+     go to terraform directory:
+
+     `$ cd terraform/`
+
+     initialize, plan and apply cloud resource creation:
+
+
+     ```shell
+     $terraform init
+     $terraform plan
+     $terraform apply
+     ```
+
+8. Configure the upload data, go to:
+ `~/prefect_orchestration/deployments/flows/config.py`
+
+    8.1. Complete the variables:
+
+    - `network` select one network e.g. FR__ASOS,
+    
+
+    - `start_year`, `start_month`, `start_day` - complete the start date, make sure that the digits are not preceded by "0"
+    
+
+    - `batch_bucket_name` - enter the name of the created Google Cloud Storgage bucket
+
+9. Set up Perfect, the task orchestration tool:
+
+    9.1. Generate new KEY for storage service account:
+
+    On Google Platform go to 
+    
+    IAM & Admin > Service Accounts, click on 
+    
+    `"storage-service-acc"` go to 
+    
+    KEYS and click on ADD KEY  > Create new key in JSON format.
+
+    <b>Save it in a safe place, do not share it on GitHub or any other public place.</b>
+
+
+    > In order not to change the code in the `gcp_credentials_blocks.py` block, create a .secrets directory:
+     ~/METAR-Data-Engineering-and-Machine-Learning-Project/.secrets
+    and put the downloaded key in it under the name:
+    `gcp_credentials_key.json`
+
+
+    9.2. Run Prefect server
+
+    ```shell
+    $ prefect orion start
+    ```
+
+    Go to: http://127.0.0.1:4200
+
+    9.3. In `~/prefect_orchestration/prefect_blocks` run below commands in console to create Credentials and GCS Bucket blocks:
+
+    ```shell
+    $ python gcp_credentials_blocks.py
+    $ python gcs_buckets_blocks.py 
+    ```
+
+    9.4. Configure Perfect Deployment:
+
+    ```shell
+    $ prefect_orchestration/deployments/deployments_config.py
+    ```
+
+    9.5. Run Prefect Agent to enable deployment in "default" queue
+
+    ```shell
+    $ prefect agent start -q "default"
+    ```
+
+10. Start deployment stage 1 - S1: Downloading data and uploading to the Google Cloud Storage bucket
+
+    Go to: `~/prefect_orchestration/deployments`
+    and run in command line:
+
+    ```shell
+    $ python deployments_run.py --stage="S1"
+
+    ```
+
+    ☝️ You can observe the running deployment flow in Prefect UI :
+
+    ![view6][Prefect_deployment]
+    After the deployment is complete, you will find the data in the GCS bucket.
+
+11.  Create a cluster in Dataproc
+
+     >Dataproc is a fully-managed cloud-based service provided by Google Cloud Platform for running big data processing workloads on Apache Hadoop and Apache Spark.
+
+
+     11.1. In Google Cloud Platform: 
+
+        ➡️ go to `Dataproc`
+
+        ➡️ Enable `Cloud Dataproc API`
+
+        ➡️ `CREATE CLUSTER` - `Cluster on Compute Engine`
+
+        ➡️ Enter `Cluster Name`
+
+        ➡️ `Location` select `Region`: `europe-west1`
+
+        ➡️ `Cluster type`: `Single Node (1 master, 0 workers)`
+
+        ➡️ `CREATE` and wait...
+
+
+12. Configuration and commissioning stage 2 - S2: data transformation using PySpark and moving to BigQuery using Dataproc
+
+    12.1. Go to `~/prefect_orchestration/deployments` in `gcloud_submit_job.sh` fill <>:
+
+    ```shell
+    $ gcloud dataproc jobs submit pyspark \
+    --cluster=<enter_cluster_name> \
+    --region=europe-west1 \
+    --jars=gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
+    gs://code/pyspark_sql.py \
+    -- \
+        --input=gs://<yout_batch_bucket_name>/data/<network_name>/*/* \
+        --bq_output=reports.<network_name> \
+        --temp_bucket=<temporary_bucket_name>
+    ```
+    >You can find a temporary bucket in Google Cloud Storage buckets after creating a cluster, the name may look like this: dataproc-temp-europe-west1-204246137998-xrofmh5o
+
+
+    12.2. Upload the `pyspark_sql.py` code to the bucket code.
+
+    In `~/prefect_orchestration/deployments/flows`:
+
+    ```shell
+    $ gsutil cp pyspark_sql.py gs://batch-metar-bucket-v2/code/pyspark_sql.py
+    ```
+    Run:
+    ```shell
+    $ chmod +x submit_spark_job.sh
+    ```
+
+    12.3. Run deployment stage S2 GCS -> BigQuery on Dataproc cluster:
+
+    ```shell
+    $ python deployments_run.py --stage="S2"
+    ```
+
+    <b>If the Job was successful, you can go to BigQuery, where the generated data is located. Now you can copy my Looker report and replace the data sources, or prepare your own. 😎</b>
+
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
@@ -105,4 +306,4 @@ For more information, please refer to the <b>"How to contribute"</b> section.
 [Milestone_1_platform]: docs/images/Milestone_1_platform.jpg
 [Milestone_2_platform]: docs/images/Milestone_2_platform.jpg
 [Looker_report]: docs/report/Looker_report.jpg
-
+[Prefect_deployment]: docs/images/prefect_deployment.jpg
