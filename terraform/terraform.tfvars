@@ -1,4 +1,4 @@
-project     = "metar-project"
+project     = "metar-project-test"
 
 accounts    = {
     bigquery    = "roles/bigquery.admin"
@@ -7,6 +7,6 @@ accounts    = {
     dataproc    = "roles/dataproc.admin"
   }
 
-buckets = ["batch", "streaming"]
+buckets = ["batch", "streaming", "code", "dataproc-staging-bucket"]
 
 location = "EU"

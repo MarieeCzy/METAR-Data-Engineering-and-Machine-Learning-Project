@@ -6,10 +6,10 @@ Configuration module
 network = ['ES__ASOS']
 
 start_year = 2023
-start_month = 1 #1 not 01
+start_month = 4 #1 not 01
 start_day = 1 #1 not 01
 
 
-batch_bucket_name = "batch-metar-bucket-1"
+batch_bucket_name = "batch-metar-bucket-2"
 
 

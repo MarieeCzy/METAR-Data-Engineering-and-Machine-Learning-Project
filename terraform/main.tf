@@ -24,17 +24,43 @@ module "service-account" {
 #Google Cloud Storage Bucket
 resource "google_storage_bucket" "metar-de-project" {
   for_each = toset(var.buckets)
-  name     = "${each.key}-metar-bucket-1"
+  name     = "${each.key}-metar-bucket-2"
   location = var.location
 }
 
-resource "google_storage_bucket" "code" {
-  name     = "code"
-  location = var.location
-}
 
 #BigQuery dataset
 resource "google_bigquery_dataset" "dataset" {
   dataset_id = "reports"
   location   = var.location
+}
+
+#Dataproc cluster
+resource "google_dataproc_cluster" "metar-cluster" {
+  name                          = "metar-cluster"
+  region                        = "europe-west1"
+  graceful_decommission_timeout = "120s"
+
+  cluster_config {
+    staging_bucket = "dataproc-staging-bucket-metar-bucket-2"
+
+    master_config {
+      machine_type = "n1-standard-2"
+
+      disk_config {
+        boot_disk_type    = "pd-ssd"
+        boot_disk_size_gb = 30
+      }
+    }
+
+    worker_config {
+      machine_type  = "n1-standard-2"
+      num_instances = 1
+
+      disk_config {
+        boot_disk_size_gb = 30
+        num_local_ssds    = 1
+      }
+    }
+  }
 }
