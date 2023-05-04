@@ -214,7 +214,7 @@ For more information, please refer to the <b>"Setup"</b> section.
     9.4. Configure Perfect Deployment:
 
     ```shell
-    $ prefect_orchestration/deployments/deployments_config.py
+    $ python prefect_orchestration/deployments/deployments_config.py
     ```
 
     9.5. Run Prefect Agent to enable deployment in "default" queue
@@ -238,59 +238,34 @@ For more information, please refer to the <b>"Setup"</b> section.
     ![view6][Prefect_deployment]
     After the deployment is complete, you will find the data in the GCS bucket.
 
-11.  Create a cluster in Dataproc
+11. Configuration and commissioning stage 2 - S2: data transformation using PySpark and moving to BigQuery using Dataproc
 
-     >Dataproc is a fully-managed cloud-based service provided by Google Cloud Platform for running big data processing workloads on Apache Hadoop and Apache Spark.
+    11.1. Go to `~/prefect_orchestration/deployments` in `gcloud_submit_job.sh` and check if given paths and names are correct:
 
-
-     11.1. In Google Cloud Platform: 
-
-        ➡️ go to `Dataproc`
-
-        ➡️ Enable `Cloud Dataproc API`
-
-        ➡️ `CREATE CLUSTER` - `Cluster on Compute Engine`
-
-        ➡️ Enter `Cluster Name`
-
-        ➡️ `Location` select `Region`: `europe-west1`
-
-        ➡️ `Cluster type`: `Single Node (1 master, 0 workers)`
-
-        ➡️ `CREATE` and wait...
-
-
-12. Configuration and commissioning stage 2 - S2: data transformation using PySpark and moving to BigQuery using Dataproc
-
-    12.1. Go to `~/prefect_orchestration/deployments` in `gcloud_submit_job.sh` fill <>:
+    >As long as you haven't changed other names/settings other than those listed in this manual, everything should be fine.
 
     ```shell
     $ gcloud dataproc jobs submit pyspark \
-    --cluster=<enter_cluster_name> \
+    --cluster=metar-cluster \
     --region=europe-west1 \
     --jars=gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
-    gs://code/pyspark_sql.py \
+    gs://code-metar-bucket-2/code/pyspark_sql.py \
     -- \
-        --input=gs://<yout_batch_bucket_name>/data/<network_name>/*/* \
-        --bq_output=reports.<network_name> \
-        --temp_bucket=<temporary_bucket_name>
+        --input=gs://batch-metar-bucket-2/data/ES__ASOS/*/* \
+        --bq_output=reports.ES__ASOS \
+        --temp_bucket=dataproc-staging-bucket-metar-bucket-2
     ```
-    >You can find a temporary bucket in Google Cloud Storage buckets after creating a cluster, the name may look like this: dataproc-temp-europe-west1-204246137998-xrofmh5o
 
 
-    12.2. Upload the `pyspark_sql.py` code to the bucket code.
+    11.2. Upload the `pyspark_sql.py` code to the bucket code.
 
     In `~/prefect_orchestration/deployments/flows`:
 
     ```shell
-    $ gsutil cp pyspark_sql.py gs://batch-metar-bucket-v2/code/pyspark_sql.py
+    $ gsutil cp pyspark_sql.py gs://code-metar-bucket-2/code/pyspark_sql.py
     ```
-    Run:
-    ```shell
-    $ chmod +x submit_spark_job.sh
-    ```
-
-    12.3. Run deployment stage S2 GCS -> BigQuery on Dataproc cluster:
+ 
+    11.3. Run deployment stage S2 GCS -> BigQuery on Dataproc cluster:
 
     ```shell
     $ python deployments_run.py --stage="S2"
