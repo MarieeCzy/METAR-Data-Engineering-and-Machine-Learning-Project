@@ -9,10 +9,10 @@ for each network and station containing a Parquet file with the name of the stat
 '''
 
 import os
+import json
 import pathlib
 import datetime
 import pandas as pd
-from . import config
 from prefect_gcp.cloud_storage import GcsBucket
 from pathlib import Path
 from prefect import flow, task
@@ -22,6 +22,8 @@ from prefect.tasks import task_input_hash
 #station=EPKK&data=all&year1=2023&month1=1&day1=1&year2=2023&month2=3&day2=26&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=null&trace=T&direct=no&report_type=3&report_type=4
 #France Hungary Poland Germany Spain Greece Italy  Austria United Kingdom
 
+with open ('flows/config.json', 'r') as f:
+    config = json.load(f)
 
 NETWORKS_SERVICE="https://mesonet.agron.iastate.edu/sites/networks.php?"
 STATION_SERVICE="https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?"
@@ -29,9 +31,9 @@ STATION_SERVICE="https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?"
 stations_list = []
 
 start_date = datetime.datetime(
-    config.start_year,
-    config.start_month,
-    config.start_day
+    config["start_year"],
+    config["start_month"],
+    config["start_day"]
     )
 
 #current date and time
@@ -168,7 +170,7 @@ def station_data_writer(
 @flow(name='Flow extracting stations from a given network', 
       log_prints=True)
 def extract_stations_and_transfer_to_save(
-    networks_list: list[str]=config.network,
+    networks_list: list[str]=config["network"],
     
     ) -> None:
     '''
