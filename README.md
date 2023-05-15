@@ -163,7 +163,7 @@ For more information, please refer to the <b>"Setup"</b> section.
      ```
 
 8. Configure the upload data, go to:
- `~/prefect_orchestration/deployments/flows/config.py`
+ `~/prefect_orchestration/deployments/flows/config.json`
 
     8.1. Complete the variables:
 
