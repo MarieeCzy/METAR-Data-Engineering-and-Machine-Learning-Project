@@ -247,8 +247,9 @@ For more information, please refer to the <b>"Setup"</b> section.
     ```shell
     $ gcloud dataproc jobs submit pyspark \
     --cluster=metar-cluster \
-    --region=europe-west1 \
+    --region=europe-west2 \
     --jars=gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
+    --files=gs://code-metar-bucket-2/code/sql_queries_config.yaml\
     gs://code-metar-bucket-2/code/pyspark_sql.py \
     -- \
         --input=gs://batch-metar-bucket-2/data/ES__ASOS/*/* \
@@ -257,12 +258,13 @@ For more information, please refer to the <b>"Setup"</b> section.
     ```
 
 
-    11.2. Upload the `pyspark_sql.py` code to the bucket code.
+    11.2. Upload the `pyspark_sql.py` and config file `sql_queries_config.yaml` to the bucket code.
 
     In `~/prefect_orchestration/deployments/flows`:
 
     ```shell
     $ gsutil cp pyspark_sql.py gs://code-metar-bucket-2/code/pyspark_sql.py
+    $ gsutil cp sql_queries_config.yaml gs://code-metar-bucket-2/code/sql_queries_config.yaml
     ```
  
     11.3. Run deployment stage S2 GCS -> BigQuery on Dataproc cluster:

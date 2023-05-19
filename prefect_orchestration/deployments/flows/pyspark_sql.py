@@ -1,3 +1,4 @@
+import yaml
 import argparse
 import os.path
 from pyspark.sql import SparkSession
@@ -137,26 +138,10 @@ class DataTransformationManager:
             .save()
 
 
-bq_tables_to_create = {
-    "data_all":
-    '''
-    SELECT *,
-    CONCAT(lat,", ", lon) AS GEOloc
-    FROM data_all
-    ''',
+def main():
+    with open('sql_queries_config.yaml', 'r') as f:
+        bq_tables_to_create = yaml.load(f, Loader=yaml.Loader)
 
-    "data_wxcodes":
-    '''
-    SELECT station, COUNT(*) AS sum, wxcodes 
-    FROM data_wxcodes
-    WHERE wxcodes IS NOT NULL
-    GROUP BY station, wxcodes
-    ORDER BY station, sum DESC    
-    '''
-}
-
-
-def main(bq_tables_to_create):
     for key, values in bq_tables_to_create.items():
 
         temp_table_name = key
@@ -171,4 +156,4 @@ def main(bq_tables_to_create):
 
 
 if __name__ == '__main__':
-    main(bq_tables_to_create)
+    main()

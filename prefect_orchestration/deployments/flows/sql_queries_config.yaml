@@ -1,0 +1,58 @@
+{
+    "data_all": "
+    SELECT * ,
+    CONCAT(lat, \", \", lon) AS GEOloc 
+    FROM data_all ",
+
+    "data_wxcodes":
+    "
+    SELECT station,
+    COUNT( * ) AS sum,
+    wxcodes FROM data_wxcodes WHERE wxcodes IS NOT NULL GROUP BY station,
+    wxcodes ORDER BY station,
+    sum DESC ",
+
+    "data_stats":
+    "
+    SELECT station,
+    ROUND(AVG(sknt), 2) AS avr_wind_speed,
+    ROUND(AVG((tmpf - 32) / 1.8), 2) AS avg_air_temperature,
+    ROUND(MAX((tmpf - 32) / 1.8), 2) AS max_air_temperature,
+    ROUND(MIN((tmpf - 32) / 1.8), 2) AS min_air_temperature,
+    ROUND(AVG(dwpf - 32 / 1.8), 2) AS avg_dew_point,
+    ROUND(AVG(vsby), 2) AS avg_visibility,
+    ROUND(AVG(drct)) AS avg_wind_direction,
+    ROUND(AVG(sknt), 2) AS avg_wind_speed,
+    ROUND(MAX(gust)) AS max_gust,
+    ROUND(AVG(gust), 2) AS avg_gust,
+    CONCAT(lat, \", \", lon) AS GEOloc
+    FROM data_stats GROUP BY station,
+    GEOloc",
+
+    "data_wind_drct":
+    "
+    SELECT station,
+    COUNT( * ) AS direction_recorded,
+    drct FROM data_wind_drct WHERE drct is not null GROUP BY station,
+    drct ORDER BY station,
+    direction_recorded DESC
+    ",
+
+    "data_wind_drct":
+    "
+    SELECT station,
+    COUNT( * ) AS direction_recorded,
+    drct FROM data_wind_drct WHERE drct is not null GROUP BY station,
+    drct ORDER BY station,
+    direction_recorded DESC
+    ",
+
+    "data_skyc1": 
+    "
+    SELECT station,
+    COUNT( * ) AS sum,
+    skyc1 FROM data_skyc1 WHERE skyc1 IS NOT NULL GROUP BY station,
+    skyc1 ORDER BY station,
+    sum DESC 
+    "
+    }

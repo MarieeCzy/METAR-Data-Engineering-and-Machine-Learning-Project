@@ -38,7 +38,7 @@ resource "google_bigquery_dataset" "dataset" {
 #Dataproc cluster
 resource "google_dataproc_cluster" "metar-cluster" {
   name                          = "metar-cluster"
-  region                        = "europe-west1"
+  region                        = "europe-west2"
   graceful_decommission_timeout = "120s"
 
   cluster_config {
@@ -55,7 +55,7 @@ resource "google_dataproc_cluster" "metar-cluster" {
 
     worker_config {
       machine_type  = "n1-standard-2"
-      num_instances = 1
+      num_instances = 2
 
       disk_config {
         boot_disk_size_gb = 30
